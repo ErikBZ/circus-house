@@ -1,4 +1,4 @@
-#!/bin/bash/python
+#!/usr/bin/python
 # the ususal suspects
 import os
 import sys
@@ -6,6 +6,7 @@ import time
 import glob
 import datetime
 import sqlite3
+import tables
 # don't know why people do it this way but
 # whatever.
 import numpy as np
@@ -16,7 +17,8 @@ msd_subset_addf_path = os.path.join(msd_subset_path, "AdditionalFiles")
 # no highway to the danger zone
 assert os.path.isdir(msd_subset_path), "No Path"
 # my code bruh
-msd_code_path = "/home/flipper/Documents/circus-house/src/"
+msd_code_path = "/home/flipper/Documents/circus-house/MSongsDB"
+sys.path.append(os.path.join(msd_code_path, "PythonSrc"))
 
 import hdf5_getters as GETTERS
 
@@ -28,7 +30,45 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
     cnt = 0
     for root, dirs, files in os.walk(basedir):
         files = glob.glob(os.path.join(root, '*'+ ext))
-        cnt = len(files)
+        # this is walking through the folders so it has to count up the files in
+        # each of the folders
+        cnt += len(files)
         for f in files:
             func(f)
     return cnt
+
+print "number of song files: ", apply_to_all_files(msd_subset_data_path)
+
+# yay for bad practices!
+feature_vector = []
+# trying to use the hdf5 getters to get the stuff i need
+def get_feature_vector(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+    tatum_confidence_vector = GETTERS.get_tatums_confidence(h5)
+    feature_vector.append(tatum_confidence_vector)
+    h5.close()
+
+apply_to_all_files(msd_subset_data_path, func=get_feature_vector)
+print feature_vector[0]
+
+# this is all the sql stuff that i might use. It is a lot faster but I can't
+# find the specs so idk what the rows are called
+'''
+# messing with the sql
+conn = sqlite3.connect(os.path.join(msd_subset_addf_path, "subset_track_metadata.db"))
+# DISTINCT is pretty self explanatory
+query = "SELECT DISTINCT artist_name FROM songs"
+response = conn.execute(query)
+all_names = response.fetchall()
+
+print type(all_names[1])
+print all_names[1]
+
+query = "SELECT * from songs"
+response = conn.execute(query)
+data = response.fetchall()
+
+print data[0]
+
+conn.close()
+'''
