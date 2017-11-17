@@ -37,19 +37,41 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
             func(f)
     return cnt
 
+def str_time_delta(starttime, stoptime):
+    return str(datetime.timedelta(seconds=stoptime - starttime))
+
 print "number of song files: ", apply_to_all_files(msd_subset_data_path)
 
 # yay for bad practices!
 feature_vector = []
 # trying to use the hdf5 getters to get the stuff i need
-def get_feature_vector(filename):
-    h5 = GETTERS.open_h5_file_read(filename)
+def get_feature_vector(h5):
     tatum_confidence_vector = GETTERS.get_tatums_confidence(h5)
     feature_vector.append(tatum_confidence_vector)
+
+tatums_start = []
+def get_tatums(h5):
+    tatum = GETTERS.get_tatums_start(h5)
+    tatums_start.append(tatum)
+
+def get_all_vectors(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+    get_feature_vector(h5)
+    get_tatums(h5)
     h5.close()
 
-apply_to_all_files(msd_subset_data_path, func=get_feature_vector)
-print feature_vector[0]
+apply_to_all_files(msd_subset_data_path, func=get_all_vectors)
+feature = feature_vector[0]
+tatums = tatums_start[0]
+print type(feature)
+print tatums
+print "Size of tatum conf: {0}, Size of tatum start: {1}".format(len(feature), len(tatums))
+
+feature = feature_vector[1]
+tatums = tatums_start[1]
+print type(feature)
+print "Size of tatum conf: {0}, Size of tatum start: {1}".format(len(feature), len(tatums))
+
 
 # this is all the sql stuff that i might use. It is a lot faster but I can't
 # find the specs so idk what the rows are called
