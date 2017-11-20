@@ -1,2 +1,4 @@
 MillionSongSubset
 MSongsDB
+*.pyc
+*.vscode
