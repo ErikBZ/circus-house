@@ -2,3 +2,5 @@ MillionSongSubset
 MSongsDB
 *.pyc
 *.vscode
+*.npy
+output

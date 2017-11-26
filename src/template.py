@@ -33,6 +33,9 @@ def str_time_delta(starttime, stoptime):
 
 print apply_to_all_files(paths.msd_subset_data_path, func=extract_features)
 feature_vector = [x for x in feature_list]
+data = np.array(feature_vector)
+print data.shape
 
-feature = feature_vector[0][2]
-print feature.shape
+minSegments = sys.maxint
+for d in data:
+    print d.shape
