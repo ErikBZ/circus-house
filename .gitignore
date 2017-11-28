@@ -5,3 +5,5 @@ MSongsDB
 *.npy
 output
 groups
+SongData
+*.tar.gz
