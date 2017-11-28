@@ -6,7 +6,7 @@ import time
 import glob
 import datetime
 import tables
-import numpy as numpy
+import numpy as np
 import paths
 from features import *
 
@@ -35,9 +35,12 @@ else:
     targets = np.array(feature_list)
     save_features(targets, "targets.npy")
     clear_wrapper()
+
 print "Targets loading/creation complete"
 
 # start the cross validation here
+'''
 clf = svm.SVC(kernel='linear', C=1)
 scores = cross_val_score(clf, features, targets, cv=5)
 print scores
+'''

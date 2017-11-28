@@ -1,3 +1,4 @@
+#! /usr/bin/python
 # import the usual suspects
 import numpy as np
 import os
@@ -55,6 +56,9 @@ def extract_features(filename):
 
     h5.close()
 
+def extract_beats(filename):
+    return 0
+
 def extract_targets(filename):
     h5 = hdf5.open_h5_file_read(filename)
 
@@ -62,11 +66,7 @@ def extract_targets(filename):
     # only 12 terms
     # for now we'll just use the first one
     terms = hdf5.get_artist_terms(h5)
-    if terms.shape[0] != 0:
-        target = terms[0]
-    else:
-        target = "None"
-    feature_list.append(target)
+    feature_list.append(terms)
 
     h5.close()
 
@@ -76,4 +76,9 @@ def save_features(feats, path="feature_data.npy"):
 def load_array(filename="feature_data.npy"):
     return np.load(filename)
 
+def main():
+    print "HI"
+
 # this will be a mix of segments and beats?
+if __name__=="__main__":
+    main()
