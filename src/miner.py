@@ -14,29 +14,22 @@ from features import *
 from sklearn.model_selection import cross_val_score
 from sklearn import svm
 
+extract()
 # mining goes here
 if os.path.exists("feature_data.npy"):
     print "Loading features"
     features = load_array()
 else:
-    print "No features found, recreating features"
-    apply_to_all_files(paths.msd_subset_data_path, func=extract_features)
-    features = np.array(feature_list)
-    save_features(features)
-    clear_wrapper()
-print "Features loading/creation complete"
-
+    print "No features found"
+    sys.exit(1)
 if os.path.exists("targets.npy"):
     print "Loading targets"
     targets = load_array("targets.npy")
 else:
-    print "No targets npy array found, creating"
-    apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
-    targets = np.array(feature_list)
-    save_features(targets, "targets.npy")
-    clear_wrapper()
+    print "No targets file found"
+    sys.exit(1)
 
-print "Targets loading/creation complete"
+print "Targets and features loading complete"
 
 # start the cross validation here
 '''

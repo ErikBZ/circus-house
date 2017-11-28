@@ -76,8 +76,24 @@ def save_features(feats, path="feature_data.npy"):
 def load_array(filename="feature_data.npy"):
     return np.load(filename)
 
+def extract():
+    # if these are truly not here, create them
+    if not os.path.exists("feature_data.npy"):
+        print "Creating features file"
+        apply_to_all_files(paths.msd_subset_data_path, func=extract_features)
+        features = np.array(feature_list)
+        save_features(features)
+        clear_wrapper()
+
+    if not os.path.exists("targets.npy"):
+        print "Creating targets file"
+        apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
+        targets = np.array(feature_list)
+        save_features(targets, "targets.npy")
+        clear_wrapper()
+
 def main():
-    print "HI"
+    extract()
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":

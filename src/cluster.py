@@ -27,6 +27,8 @@ from sklearn.cluster import KMeans
     #Soul
     #Rock
 #k=11 i guess
+
+extract()
 if os.path.exists("feature_data.npy"):
     print "Loading data"
     features = load_array()
@@ -51,10 +53,12 @@ else:
 # list of dictionaries containing the targets
 grouped_terms = [{} for x in range(11)]
 
-kmeans = KMeans(n_clusters=11).fit(features[0:50])
-arr = kmeans.labels_
-print type(arr)
+cluster = KMeans(n_clusters=11).fit(features)
+arr = cluster.labels_
+# going to save it into file with a certain name
+folder = "kmeans"
 
+print "Counting the terms"
 for i in xrange(len(arr)):
     label = arr[i]
     for word in targets[i]:
@@ -64,8 +68,9 @@ for i in xrange(len(arr)):
         else:
             grouped_terms[label][word] = 1
 
+print "Saving items into files"
 def write_dict_to_array(data, filename):
-    with open(os.path.join("groups", filename), "w") as f:
+    with open(os.path.join(folder, filename), "w") as f:
         for d in data:
             if data[d] > 1:
                 f.write("{0}: {1}\n".format(d, data[d]))
