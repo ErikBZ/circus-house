@@ -74,8 +74,9 @@ def extract_targets(filename):
 def extract_mb_terms(filename):
     h5 = hdf5.open_h5_file_read(filename)
     terms = hdf5.get_artist_mbtags(h5)
-    term_count = hdf5.get_artist_mbtags_count(h5)
-    feature_list.append((terms, term_count))
+    #term_count = hdf5.get_artist_mbtags_count(h5)
+    #feature_list.append((terms, term_count))
+    feature_list.append(terms)
     h5.close()
 
 def extract_timbre_pitches(filename):

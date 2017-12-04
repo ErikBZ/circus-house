@@ -67,15 +67,15 @@ def write_dict_to_array(data, filename):
 def kmeans():
     if os.path.exists("Segs_Timbre_Features.npy"):
         print "Loading data"
-        features = load_array()
+        features = load_array("Segs_Timbre_Features.npy")
     else:
-        print "Do data, please create"
+        print "No data, please create"
         sys.exit(1)
 
     # load labels
-    if os.path.exists("targets.npy"):
+    if os.path.exists("MBTags_Targets.npy"):
         print "Loading targets"
-        targets = load_array("targets.npy")
+        targets = load_array("MBTags_Targets.npy")
     else:
         print "No targets array"
         sys.exit(1)
@@ -130,7 +130,7 @@ def agglo():
     return 0
 
 if __name__=="__main__":
-    if len(sys.argv[]) != 2:
+    if len(sys.argv) != 2:
         sys.exit()
     if sys.argv[1] == "-k":
         kmeans()
