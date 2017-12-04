@@ -1,3 +1,4 @@
+#! /usr/bin/python
 # cluster the 10000 subset items to figure out which terms
 # which 20ish genres
 
@@ -9,6 +10,7 @@ import datetime
 import tables
 import numpy as np
 import paths
+import heapq
 from features import *
 
 #sklearn stuff here
@@ -26,54 +28,107 @@ from sklearn.cluster import KMeans
     #Pop
     #Soul
     #Rock
+# according to the MSD it's 10 and GZTAN
+    # Classic Pop and Rock
+    # Folk
+    # Dance
+    # Electronica
+    # Jazz and Blues
+    # Soul and Reggae
+    # Punk
+    # Metal
+    # Clasical
+    # pop
+    # Hip-Hop
 #k=11 i guess
 
-extract()
-if os.path.exists("feature_data.npy"):
-    print "Loading data"
-    features = load_array()
-else:
-    print "Do data, please create"
-    sys.exit(0)
+# getting the top 5 words of each
+sys.stderr = open("error.log", "w") 
+def get_top_five(data):
+    heap = []
+    result = []
+    for d in data:
+        heapq.heappush(heap, (-1*data[d], d))
+    for i in xrange(5):
+        if i < len(heap):
+            score, key = heapq.heappop(heap)
+            result.append((key, score*-1))
+    return result
 
-# load labels
-if os.path.exists("targets.npy"):
-    print "Loading targets"
-    targets = load_array("targets.npy")
-else:
-    print "No targets npy array found, creating"
-    apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
-    targets = np.array(feature_list)
-    save_features(targets, "targets.npy")
-    clear_wrapper()
-
-# i'll be trying DBScan and K-Means, maybe agglomerative
-# first k-Means
-
-# list of dictionaries containing the targets
-grouped_terms = [{} for x in range(11)]
-
-cluster = KMeans(n_clusters=11).fit(features)
-arr = cluster.labels_
-# going to save it into file with a certain name
-folder = "kmeans"
-
-print "Counting the terms"
-for i in xrange(len(arr)):
-    label = arr[i]
-    for word in targets[i]:
-        # adding it to the tracker
-        if word in grouped_terms[label]:
-            grouped_terms[label][word] += 1
-        else:
-            grouped_terms[label][word] = 1
-
-print "Saving items into files"
 def write_dict_to_array(data, filename):
     with open(os.path.join(folder, filename), "w") as f:
         for d in data:
             if data[d] > 1:
                 f.write("{0}: {1}\n".format(d, data[d]))
 
-for i in xrange(len(grouped_terms)):
-    write_dict_to_array(grouped_terms[i], str(i))
+# trying kmeans from 1 - 20
+# trying 3 times
+def main():
+    extract()
+
+    if os.path.exists("feature_data.npy"):
+        print "Loading data"
+        features = load_array()
+    else:
+        print "Do data, please create"
+        sys.exit(0)
+
+    # load labels
+    if os.path.exists("targets.npy"):
+        print "Loading targets"
+        targets = load_array("targets.npy")
+    else:
+        print "No targets npy array found, creating"
+        apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
+        targets = np.array(feature_list)
+        save_features(targets, "targets.npy")
+        clear_wrapper()
+
+    # i'll be trying DBScan and K-Means, maybe agglomerative
+    # first k-Means
+    # trying for 20 clusters
+    for i in xrange(20):
+        # list of dictionaries containing the targets
+        grouped_terms = [{} for x in range(i+1)]
+        k_cluster = i+1
+
+        cluster = KMeans(n_clusters=k_cluster).fit(features)
+        # use this to get some metrics on the labels
+        arr = cluster.labels_
+        # this is the best inertia I believe
+        error = cluster.inertia_
+
+        # going to save it into file with a certain name
+        folder = "kmeans"
+
+        print "Counting the terms"
+        for i in xrange(len(arr)):
+            label = arr[i]
+            for word in targets[i]:
+                # adding it to the tracker
+                if word in grouped_terms[label]:
+                    grouped_terms[label][word] += 1
+                else:
+                    grouped_terms[label][word] = 1
+
+        print "Getting top five words per cluster"
+        top_words_for_each_cluster = []
+        for i in xrange(len(grouped_terms)):
+            top_five = get_top_five(grouped_terms[i])
+            top_words_for_each_cluster.append(top_five)
+
+        print "Writing info to file"
+        filename = "k_mean_k={0}_try={1}.txt".format(k_cluster, 0)
+        with open(os.path.join(folder, filename), "w") as f:
+            f.write("K Means with K = {0}\n".format(k_cluster))
+            f.write("Best Error: {0}\n\n".format(error))
+            for i in xrange(len(grouped_terms)):
+                f.write("Top Words for Label: {0}\n".format(i))
+                words = top_words_for_each_cluster[i]
+                for word in words:
+                    key, score = word            
+                    f.write("{0}: {1}\n".format(key, score))
+                f.write("\n\n")
+
+if __name__=="__main__":
+    main()
