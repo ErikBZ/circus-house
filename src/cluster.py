@@ -15,6 +15,7 @@ from features import *
 
 #sklearn stuff here
 from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
 
 # according to wikipedia these are the most popular genres
     #Blues
@@ -38,7 +39,7 @@ from sklearn.cluster import KMeans
     # Punk
     # Metal
     # Clasical
-    # pop
+    # Pop
     # Hip-Hop
 #k=11 i guess
 
@@ -63,26 +64,21 @@ def write_dict_to_array(data, filename):
 
 # trying kmeans from 1 - 20
 # trying 3 times
-def main():
-    extract()
-
-    if os.path.exists("feature_data.npy"):
+def kmeans():
+    if os.path.exists("Segs_Timbre_Features.npy"):
         print "Loading data"
         features = load_array()
     else:
         print "Do data, please create"
-        sys.exit(0)
+        sys.exit(1)
 
     # load labels
     if os.path.exists("targets.npy"):
         print "Loading targets"
         targets = load_array("targets.npy")
     else:
-        print "No targets npy array found, creating"
-        apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
-        targets = np.array(feature_list)
-        save_features(targets, "targets.npy")
-        clear_wrapper()
+        print "No targets array"
+        sys.exit(1)
 
     # i'll be trying DBScan and K-Means, maybe agglomerative
     # first k-Means
@@ -99,7 +95,7 @@ def main():
         error = cluster.inertia_
 
         # going to save it into file with a certain name
-        folder = "kmeans"
+        folder = "kmeans_feat2"
 
         print "Counting the terms"
         for i in xrange(len(arr)):
@@ -130,5 +126,13 @@ def main():
                     f.write("{0}: {1}\n".format(key, score))
                 f.write("\n\n")
 
+def agglo():
+    return 0
+
 if __name__=="__main__":
-    main()
+    if len(sys.argv[]) != 2:
+        sys.exit()
+    if sys.argv[1] == "-k":
+        kmeans()
+    elif sys.argv[1] == "-a":
+        agglo()

@@ -6,6 +6,7 @@ import sys
 import datetime
 import paths
 import glob
+sys.stderr = open("features_error.log", "w")
 
 # importing hdf5
 import hdf5_getters as hdf5
@@ -70,6 +71,32 @@ def extract_targets(filename):
 
     h5.close()
 
+def extract_mb_terms(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    terms = hdf5.get_artist_mbtags(h5)
+    term_count = hdf5.get_artist_mbtags_count(h5)
+    feature_list.append((terms, term_count))
+    h5.close()
+
+def extract_timbre_pitches(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    segs = hdf5.get_segments_pitches(h5)[:minSegments]
+    timbre = hdf5.get_segments_timbre(h5)[:minSegments]
+    # to add the zero buffers
+    first_n_timbre = np.zeros((minSegments, 12))
+    first_n_timbre[:timbre.shape[0], :timbre.shape[1]] = timbre
+    first_n_segs = np.zeros((minSegments, 12))
+    first_n_segs[:segs.shape[0], :segs.shape[1]] = segs
+    # flatenning
+    segs_features = np.resize(first_n_segs, minSegments * 12)
+    timbre_features = np.resize(first_n_timbre, minSegments * 12)
+    feature = np.zeros(minSegments * 12 * 2)
+    feature[:segs_features.shape[0]] = segs_features
+    feature[segs_features.shape[0]:] = timbre_features
+    feature_list.append(feature)
+
+    h5.close()
+
 def save_features(feats, path="feature_data.npy"):
     np.save(path, feats)
 
@@ -92,8 +119,27 @@ def extract():
         save_features(targets, "targets.npy")
         clear_wrapper()
 
+def create_save_features(filename, func=lambda x:x):
+    if not os.path.exists(filename):
+        print "Creating {0} features".format(filename)
+        apply_to_all_files(paths.msd_subset_data_path, func=func)
+        targets = np.array(feature_list)
+        save_features(targets, filename)
+        clear_wrapper()
+
+
+def extract_2():
+    create_save_features("MBTags_Targets.npy", func=extract_mb_terms)
+    create_save_features("Segs_Timbre_Features.npy", func=extract_timbre_pitches)
+
 def main():
-    extract()
+    if len(sys.argv) != 2:
+        print "Needs parameter ( -f1, -f2, ... etc)"
+        sys.exit()
+    if sys.argv[1] == "-f1":
+        extract()
+    elif sys.argv[1] == "-f2":
+        extract_2()
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":

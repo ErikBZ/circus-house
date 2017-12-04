@@ -8,3 +8,4 @@ groups
 SongData
 *.tar.gz
 kmeans
+*log
