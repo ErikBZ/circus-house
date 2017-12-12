@@ -12,7 +12,7 @@ sys.stderr = open("features_error.log", "w")
 import hdf5_getters as hdf5
 
 # min segments
-minSegments = 100
+minSegments = 200
 numberOfEntries = 10000
 
 # creates a group of features
@@ -88,6 +88,7 @@ def extract_timbre_pitches(filename):
     first_n_timbre[:timbre.shape[0], :timbre.shape[1]] = timbre
     first_n_segs = np.zeros((minSegments, 12))
     first_n_segs[:segs.shape[0], :segs.shape[1]] = segs
+
     # flatenning
     segs_features = np.resize(first_n_segs, minSegments * 12)
     timbre_features = np.resize(first_n_timbre, minSegments * 12)
@@ -95,7 +96,24 @@ def extract_timbre_pitches(filename):
     feature[:segs_features.shape[0]] = segs_features
     feature[segs_features.shape[0]:] = timbre_features
     feature_list.append(feature)
+    h5.close()
 
+def extract_timbre(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    timbre = hdf5.get_segments_timbre(h5)[:minSegments]
+    first_100_slice = np.zeros((minSegments, 12))
+    first_100_slice[:timbre.shape[0], :timbre.shape[1]] = timbre
+    feature = np.resize(first_100_slice, minSegments * 12) 
+    feature_list.append(feature)
+    h5.close()
+
+def extract_loudness(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    timbre = hdf5.get_segments_loudness_max(h5)[:minSegments]
+    first_100_slice = np.zeros(minSegments)
+    first_100_slice[:timbre.shape[0]] = timbre
+    feature = np.resize(first_100_slice, minSegments) 
+    feature_list.append(feature)
     h5.close()
 
 def save_features(feats, path="feature_data.npy"):
@@ -128,10 +146,48 @@ def create_save_features(filename, func=lambda x:x):
         save_features(targets, filename)
         clear_wrapper()
 
+# creates a text file with the correct tags of the dataset
+def set_correct_tag(array):
+    index_map = {}
+    tag_list = []
+    with open("Genre_Targets.txt", "w") as tar:
+        for i in xrange(len(array)):
+            if len(array[i][0]) == 0:
+                tar.write("Unknown\n")
+            else:
+                tag = get_tag(array[i])
+                if len(tag) != 0:
+                    tar.write("{}\n".format(tag))
+                    tag_list.append(tag)
+                    index_map[i] = len(tag_list) - 1
+                else:
+                    tar.write("Unknown\n")
+    return index_map, tag_list
+
+def get_tag(item):
+    result = ""
+    score = 0
+    top_tags = ["classic pop and rock", "folk",
+                "electronica", "jazz and blues",
+                "soul and reggae", "punk",
+                "metal", "classical", "pop", "hip hop"]
+
+    tags = item[0]
+    counts = item[1]
+    for i in xrange(len(tags)):
+        if tags[i] in top_tags:
+            tag = tags[i]
+            count = counts[i]
+            if count >= score:
+                result = tag
+                score = count
+    return result
 
 def extract_2():
     create_save_features("MBTags_Targets.npy", func=extract_mb_terms)
     create_save_features("Segs_Timbre_Features.npy", func=extract_timbre_pitches)
+    create_save_features("Timbre_Features.npy", func=extract_timbre)
+    create_save_features("Loudness_Features.npy", func=extract_loudness)
 
 def main():
     if len(sys.argv) != 2:
