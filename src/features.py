@@ -20,6 +20,11 @@ numberOfEntries = 10000
 # so all samples should have the same number of features
 feature_list = []
 entries = np.zeros((numberOfEntries, minSegments * 12), dtype=float)
+# the tags that i want to use
+top_tags = ["classic pop and rock", "folk",
+            "electronica", "jazz and blues",
+            "soul and reggae", "punk",
+            "metal", "classical", "pop", "hip hop"]
 
 #this function iterates through all the files and applies a function lambda
 def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
@@ -32,6 +37,24 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
         for f in files:
             func(f)
     return cnt
+
+def check_if_common_tag(terms):
+    for i in range(len(terms)):
+        if terms[i] in top_tags:
+            return True
+    return False
+
+def get_most_counted_term(terms, count):
+    max_index = -1
+    max_count = 0
+    for i in range(len(terms)):
+        if terms[i] in top_tags and max_count < count[i]:
+            max_index = i
+            max_count = count[i]
+    return terms[max_index] if max_index > -1 else ""
+
+def count_instances_per_term(terms, count, mem):
+    return 0
 
 # should always be called if we're trying to extract
 # new features
