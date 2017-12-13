@@ -76,7 +76,7 @@ def arrange_by_tag(filename):
 # get_most_counted term
 # track id is also the file and location of the song
 def get_labels(filename):
-    h5 = open_h5_file_read(filename)
+    h5 = hdf5.open_h5_file_read(filename)
     terms = hdf5.get_artist_mbtags(h5)
     count = hdf5.get_artist_mbtags_count(h5)
     class_tag = get_most_counted_term()
