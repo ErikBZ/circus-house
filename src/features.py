@@ -42,6 +42,7 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
             func(f)
     return cnt
 
+# used for labels this way
 def check_if_common_tag(terms):
     for i in range(len(terms)):
         if terms[i] in top_tags:
@@ -53,7 +54,7 @@ def get_most_counted_term(terms, count):
     max_index = -1
     max_count = 0
     for i in range(len(terms)):
-        if terms[i] in top_tags and max_count < count[i]:
+        if terms[i] in tag_count and max_count < count[i]:
             max_index = i
             max_count = count[i]
     return terms[max_index] if max_index > -1 else ""
@@ -70,6 +71,26 @@ def arrange_by_tag(filename):
     count = hdf5.get_artist_mbtags_count(h5)
     count_instances_per_term(terms, count)
     h5.close()
+
+# gets track id of the song, and it's label according to
+# get_most_counted term
+# track id is also the file and location of the song
+def get_labels(filename):
+    h5 = open_h5_file_read(filename)
+    terms = hdf5.get_artist_mbtags(h5)
+    count = hdf5.get_artist_mbtags_count(h5)
+    class_tag = get_most_counted_term()
+
+    if class_tag != "":
+        track_id = hdf5.get_track_id(h5)
+        feature_list.append((track_id, class_tag))
+
+    h5.close()
+
+def save_list_to_text(lst, filename):
+    with open(filename, "w") as fout:
+        for class_id, tag in lst:
+            fout.write("{0}, {1}".format(class_id, tag))
 
 # should always be called if we're trying to extract
 # new features
@@ -228,9 +249,8 @@ def extract_2():
     create_save_features("Loudness_Features.npy", func=extract_loudness)
 
 def main():
-    apply_to_all_files(paths.msd_subset_data_path, func=arrange_by_tag)
-    print tag_count
-
+    apply_to_all_files(paths.msd_subset_data_path, func=get_labels)
+    save_list_to_text(feature_list, "TrackIds_Labels.txt")
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":
