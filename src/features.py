@@ -24,7 +24,11 @@ entries = np.zeros((numberOfEntries, minSegments * 12), dtype=float)
 top_tags = ["classic pop and rock", "folk",
             "electronica", "jazz and blues",
             "soul and reggae", "punk",
-            "metal", "classical", "pop", "hip hop"]
+            "metal", "classical", "pop", "hip hop", ""]
+
+tag_count = {}
+for tag in top_tags:
+    tag_count[tag] = 0
 
 #this function iterates through all the files and applies a function lambda
 def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
@@ -45,6 +49,7 @@ def check_if_common_tag(terms):
     return False
 
 def get_most_counted_term(terms, count):
+    assert len(terms) == len(count)
     max_index = -1
     max_count = 0
     for i in range(len(terms)):
@@ -53,8 +58,18 @@ def get_most_counted_term(terms, count):
             max_count = count[i]
     return terms[max_index] if max_index > -1 else ""
 
-def count_instances_per_term(terms, count, mem):
+def count_instances_per_term(terms, count):
+    term = get_most_counted_term(terms, count)
+    # also counts how many unknowns there are
+    tag_count[term] += 1
     return 0
+
+def arrange_by_tag(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    terms = hdf5.get_artist_mbtags(h5)
+    count = hdf5.get_artist_mbtags_count(h5)
+    count_instances_per_term(terms, count)
+    h5.close()
 
 # should always be called if we're trying to extract
 # new features
@@ -213,13 +228,9 @@ def extract_2():
     create_save_features("Loudness_Features.npy", func=extract_loudness)
 
 def main():
-    if len(sys.argv) != 2:
-        print "Needs parameter ( -f1, -f2, ... etc)"
-        sys.exit()
-    if sys.argv[1] == "-f1":
-        extract()
-    elif sys.argv[1] == "-f2":
-        extract_2()
+    apply_to_all_files(paths.msd_subset_data_path, func=arrange_by_tag)
+    print tag_count
+
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":
