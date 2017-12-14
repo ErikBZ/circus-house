@@ -15,6 +15,9 @@ import hdf5_getters as hdf5
 minSegments = 200
 numberOfEntries = 10000
 
+# used to find the mim element
+minimum = [sys.maxint]
+
 # creates a group of features
 # should be in a (n_samples, n_features) shape
 # so all samples should have the same number of features
@@ -35,12 +38,28 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
     cnt = 0
     for root, dirs, files in os.walk(basedir):
         files = glob.glob(os.path.join(root, '*'+ ext))
+        print files
         # this is walking through the folders so it has to count up the files in
         # each of the folders
         cnt += len(files)
         for f in files:
             func(f)
     return cnt
+
+# lst should be a list of tuples of size 2
+def apply_to_all_listed_files(basedir, lst, func=lambda x:x):
+    for track_id, class_tag in lst:
+        path = os.path.join(basedir, get_file_path(track_id))
+        func(path)
+    return 0
+
+# gets the path and filename of the track id
+def get_file_path(track_id):
+    data_location = ""
+    dirs = track_id[2:5]
+    for d in dirs:
+        data_location = os.path.join(data_location, d)
+    return os.path.join(data_location, track_id+".h5")
 
 # used for labels this way
 def check_if_common_tag(terms):
@@ -79,7 +98,7 @@ def get_labels(filename):
     h5 = hdf5.open_h5_file_read(filename)
     terms = hdf5.get_artist_mbtags(h5)
     count = hdf5.get_artist_mbtags_count(h5)
-    class_tag = get_most_counted_term()
+    class_tag = get_most_counted_term(terms, count)
 
     if class_tag != "":
         track_id = hdf5.get_track_id(h5)
@@ -90,7 +109,16 @@ def get_labels(filename):
 def save_list_to_text(lst, filename):
     with open(filename, "w") as fout:
         for class_id, tag in lst:
-            fout.write("{0}, {1}".format(class_id, tag))
+            fout.write("{0},{1}\n".format(class_id, tag))
+
+def load_labels_text(filename):
+    labels = []
+    with open(filename, "r") as fin:
+        data = fin.readlines()
+    for line in data:
+        id_label = line.split(',')
+        labels.append((id_label[0], id_label[1]))
+    return labels
 
 # should always be called if we're trying to extract
 # new features
@@ -116,8 +144,18 @@ def extract_features(filename):
 
     h5.close()
 
-def extract_beats(filename):
-    return 0
+def print_song_name(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    print hdf5.get_title(h5)
+    h5.close()
+
+def get_min_segments(filename):
+    h5 = hdf5.open_h5_file_read(filename)
+    shape = hdf5.get_segments_loudness_max(h5).shape[0]        
+    if shape < minimum[0]:
+        minimum[0] = shape
+        print minimum[0]
+    h5.close()
 
 def extract_targets(filename):
     h5 = hdf5.open_h5_file_read(filename)
@@ -251,6 +289,8 @@ def extract_2():
 def main():
     apply_to_all_files(paths.msd_subset_data_path, func=get_labels)
     save_list_to_text(feature_list, "TrackIds_Labels.txt")
+    labels = load_labels_text("TrackIds_Labels.txt")
+    apply_to_all_listed_files(paths.msd_subset_data_path, labels, func=get_min_segments)
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":
