@@ -38,7 +38,6 @@ def apply_to_all_files(basedir, func= lambda x: x, ext=".h5"):
     cnt = 0
     for root, dirs, files in os.walk(basedir):
         files = glob.glob(os.path.join(root, '*'+ ext))
-        print files
         # this is walking through the folders so it has to count up the files in
         # each of the folders
         cnt += len(files)
@@ -116,6 +115,7 @@ def load_labels_text(filename):
     with open(filename, "r") as fin:
         data = fin.readlines()
     for line in data:
+        line = line.strip()
         id_label = line.split(',')
         labels.append((id_label[0], id_label[1]))
     return labels
@@ -156,6 +156,16 @@ def get_min_segments(filename):
         minimum[0] = shape
         print minimum[0]
     h5.close()
+
+# this tries using loudness, tempo and time_sig
+def feature_set_one(filename):
+    fin = hdf5.open_h5_file_read(filename)
+    features = []
+    features.append(hdf5.get_time_signature(fin))
+    features.append(hdf5.get_loudness(fin))
+    features.append(hdf5.get_tempo(fin))
+    feature_list.append(features)
+    fin.close()
 
 def extract_targets(filename):
     h5 = hdf5.open_h5_file_read(filename)
@@ -287,10 +297,31 @@ def extract_2():
     create_save_features("Loudness_Features.npy", func=extract_loudness)
 
 def main():
-    apply_to_all_files(paths.msd_subset_data_path, func=get_labels)
-    save_list_to_text(feature_list, "TrackIds_Labels.txt")
-    labels = load_labels_text("TrackIds_Labels.txt")
-    apply_to_all_listed_files(paths.msd_subset_data_path, labels, func=get_min_segments)
+    if len(sys.argv) < 2:
+        print "Needs some argument"
+        sys.exit(1)
+    if sys.argv[1] == "labels":
+        print "Generating Track Ids and Labels"
+        apply_to_all_files(paths.msd_subset_data_path, func=get_labels)
+        save_list_to_text(feature_list, "TrackIds_Labels.txt")
+        sys.exit(0)
+    if sys.argv[1] == "generate":
+        if not os.path.isfile("TrackIds_Labels.txt"):
+            print "please generate labels first"
+            sys.exit(1)
+        if len(sys.argv) != 2:
+            print "Please choose feature set to generate"
+            sys.exit(1)
+        
+        if sys.argv[1] == "1":
+            func = feature_set_one
+
+        labels = load_labels_text("TrackIds_Labels.txt")
+        apply_to_all_listed_files(paths.msd_subset_data_path, labels, func=func)
+        features_np = np.array(features_list)
+        save_features(features_np, func.__name__ + ".npy")
+        clear_wrapper()
+        sys.exit(0)
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":

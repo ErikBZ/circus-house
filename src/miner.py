@@ -15,44 +15,13 @@ from sklearn.model_selection import cross_val_score
 from sklearn import svm
 from sklearn import neighbors
 
-# extract()
-extract_2()
-# mining goes here
-if os.path.exists("Loudness_Features.npy"):
-    print "Loading features"
-    features = load_array("Loudness_Features.npy")
-else:
-    print "No features found"
-    sys.exit(1)
+# loading our tracks and labels
+t_l_file = "TracksIds_Labels.txt"
 
-if os.path.exists("MBTags_Targets.npy"):
-    print "Loading targets"
-    targets = load_array("MBTags_Targets.npy")
-else:
-    print "No targets file found"
-    sys.exit(1)
+def main():
+    tracks_labels = load_labels_text(t_l_file)
+    labels = [x[1] for x in tracks_labels]
+    return 0
 
-index_map, targets = set_correct_tag(targets)
-# filter out items in features
-features_to_use = np.zeros((len(targets), features.shape[1]))
-true_targs = np.array(targets)
-
-def map_items(mapping, features, out_feats):
-    for x in mapping:
-        out_feats[mapping[x]] = features[x]
-
-map_items(index_map, features, features_to_use)
-
-print "Targets and features loading complete"
-print len(features_to_use)
-
-# start the cross validation here
-clf = svm.SVC(kernel='linear', C=1.0)
-scores = cross_val_score(clf, features_to_use, true_targs, cv=5)
-print scores
-'''
-for i in xrange(1, 13, 2):
-    clf = neighbors.KNeighborsClassifier(n_neighbors=i)
-    scores = cross_val_score(clf, features_to_use, true_targs, cv=5)
-    print scores
-'''
+if __name__=="__main__":
+    main()
