@@ -290,15 +290,18 @@ def get_tag(item):
                 score = count
     return result
 
-def extract_2():
-    create_save_features("MBTags_Targets.npy", func=extract_mb_terms)
-    create_save_features("Segs_Timbre_Features.npy", func=extract_timbre_pitches)
-    create_save_features("Timbre_Features.npy", func=extract_timbre)
-    create_save_features("Loudness_Features.npy", func=extract_loudness)
+def create_dataset(lst, dataset_name, extractor=lambda x:x):
+    apply_to_all_listed_files(paths.msd_subset_data_path, lst, extractor)
+    features_np = np.array(feature_list)
+    save_features(features_np, dataset_name)
+    clear_wrapper()
+
 
 def main():
     if len(sys.argv) < 2:
-        print "Needs some argument"
+        print "Needs some argument\n\
+            To Generate Labels [labels]\n\
+            To Generate Dataset [generate] [featureset] [fout] [fout]"
         sys.exit(1)
     if sys.argv[1] == "labels":
         print "Generating Track Ids and Labels"
@@ -306,21 +309,21 @@ def main():
         save_list_to_text(feature_list, "TrackIds_Labels.txt")
         sys.exit(0)
     if sys.argv[1] == "generate":
-        if not os.path.isfile("TrackIds_Labels.txt"):
+        if not (os.path.isfile("test_labels.txt")
+            and os.path.isfile("train_labels.txt")):
             print "please generate labels first"
             sys.exit(1)
-        if len(sys.argv) != 2:
+        if len(sys.argv) < 5:
             print "Please choose feature set to generate"
+            print "Please enter two file names [test] [train]"
             sys.exit(1)
         
-        if sys.argv[1] == "1":
+        if sys.argv[2] == "1":
             func = feature_set_one
-
-        labels = load_labels_text("TrackIds_Labels.txt")
-        apply_to_all_listed_files(paths.msd_subset_data_path, labels, func=func)
-        features_np = np.array(features_list)
-        save_features(features_np, func.__name__ + ".npy")
-        clear_wrapper()
+        test_labels = load_labels_text("test_labels.txt")
+        train_labels = load_labels_text("train_labels.txt")
+        create_dataset(test_labels, sys.argv[3], func)
+        create_dataset(train_labels, sys.argv[4], func)
         sys.exit(0)
 
 # this will be a mix of segments and beats?
