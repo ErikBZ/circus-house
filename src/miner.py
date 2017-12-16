@@ -33,13 +33,13 @@ def cross_validate_svm_one_vs(data, labels):
     clf = svm.SVR(kernel='poly')
     print data.shape
     print rock_vs_all.shape
-    scores = cross_val_score(clf, data, rock_vs_all, cv=5, scoring='f1')
+    scores = cross_val_score(clf, data, rock_vs_all, cv=5)
     print scores
 
 def cross_validate_svm(data, labels):
     clf = svm.SVR(kernel='poly')
     # f1 may work
-    scores = cross_val_score(clf, data, labels, cv=5, scoring='f1')
+    scores = cross_val_score(clf, data, labels, cv=5)
     print scores
 
 def cross_validate_nn(data, labels):
