@@ -19,6 +19,7 @@ from sklearn.preprocessing import normalize
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_selection import SelectFromModel
+from sklearn import metrics
 
 # loading our tracks and labels
 t_l_file = "TracksIds_Labels.txt"
@@ -67,7 +68,6 @@ def predict_nn(data, labels, test):
     return 0
 
 def cross_val_knn(data, labels, k_max):
-
     return 0
 
 # gets the f1 score of each
@@ -99,6 +99,10 @@ def score(ground, predict, label_mapping):
         print "{0}:".format(label)
         print "\t\t\tF1: {0:.2f}\t All Pos: {1}\t True Pos: {2}\t False Pos: {3}".format(
             f1, all_pos, true_pos, false_pos)
+        
+def confusion_matrix(ground, predict, label_mapping):
+    conf_mat = sklearn.confusion_matrix(ground, predict)
+    return 0
 
 def compute_confusion(ground, predict):
     return 0

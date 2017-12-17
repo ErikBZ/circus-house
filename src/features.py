@@ -192,6 +192,20 @@ def feature_set_two(filename):
 
     fin.close()
 
+def feature_set_three(filename):
+    fin = hdf5.open_h5_file_read(filename)
+    features = np.zeros(20)
+    loudness = reduce_segments(hdf5.get_segments_loudness_max(fin), 20)
+    features = flatten(loudness)
+    feature_list.append(features)
+    fin.close()
+
+def feature_set_four(filename):
+    fin = hdf5.open_h5_file_read(filename)
+    timbre = reduce_segments(hdf5.get_segments_pitches(fin), 20)
+    feature_list.append(flatten(timbre))
+    fin.close()
+
 def flatten(arr):
     if len(arr.shape) != 2:
         return arr
@@ -240,83 +254,12 @@ def average_2d(arr):
 def average(arr):
     return sum(arr) / float(len(arr))
 
-def extract_targets(filename):
-    h5 = hdf5.open_h5_file_read(filename)
-
-    # getting the target classes for the stuff
-    # only 12 terms
-    # for now we'll just use the first one
-    terms = hdf5.get_artist_terms(h5)
-    feature_list.append(terms)
-
-    h5.close()
-
-def extract_mb_terms(filename):
-    h5 = hdf5.open_h5_file_read(filename)
-    terms = hdf5.get_artist_mbtags(h5)
-    #term_count = hdf5.get_artist_mbtags_count(h5)
-    #feature_list.append((terms, term_count))
-    feature_list.append(terms)
-    h5.close()
-
-def extract_timbre_pitches(filename):
-    h5 = hdf5.open_h5_file_read(filename)
-    segs = hdf5.get_segments_pitches(h5)[:minSegments]
-    timbre = hdf5.get_segments_timbre(h5)[:minSegments]
-    # to add the zero buffers
-    first_n_timbre = np.zeros((minSegments, 12))
-    first_n_timbre[:timbre.shape[0], :timbre.shape[1]] = timbre
-    first_n_segs = np.zeros((minSegments, 12))
-    first_n_segs[:segs.shape[0], :segs.shape[1]] = segs
-
-    # flatenning
-    segs_features = np.resize(first_n_segs, minSegments * 12)
-    timbre_features = np.resize(first_n_timbre, minSegments * 12)
-    feature = np.zeros(minSegments * 12 * 2)
-    feature[:segs_features.shape[0]] = segs_features
-    feature[segs_features.shape[0]:] = timbre_features
-    feature_list.append(feature)
-    h5.close()
-
-def extract_timbre(filename):
-    h5 = hdf5.open_h5_file_read(filename)
-    timbre = hdf5.get_segments_timbre(h5)[:minSegments]
-    first_100_slice = np.zeros((minSegments, 12))
-    first_100_slice[:timbre.shape[0], :timbre.shape[1]] = timbre
-    feature = np.resize(first_100_slice, minSegments * 12) 
-    feature_list.append(feature)
-    h5.close()
-
-def extract_loudness(filename):
-    h5 = hdf5.open_h5_file_read(filename)
-    timbre = hdf5.get_segments_loudness_max(h5)[:minSegments]
-    first_100_slice = np.zeros(minSegments)
-    first_100_slice[:timbre.shape[0]] = timbre
-    feature = np.resize(first_100_slice, minSegments) 
-    feature_list.append(feature)
-    h5.close()
-
 def save_features(feats, path="feature_data.npy"):
     np.save(path, feats)
 
 def load_array(filename="feature_data.npy"):
     return np.load(filename)
 
-def extract():
-    # if these are truly not here, create them
-    if not os.path.exists("feature_data.npy"):
-        print "Creating features file"
-        apply_to_all_files(paths.msd_subset_data_path, func=extract_features)
-        features = np.array(feature_list)
-        save_features(features)
-        clear_wrapper()
-
-    if not os.path.exists("targets.npy"):
-        print "Creating targets file"
-        apply_to_all_files(paths.msd_subset_data_path, func=extract_targets)
-        targets = np.array(feature_list)
-        save_features(targets, "targets.npy")
-        clear_wrapper()
 
 def create_save_features(filename, func=lambda x:x):
     if not os.path.exists(filename):
@@ -395,6 +338,11 @@ def main():
             func = feature_set_one
         if sys.argv[2] == "2":
             func = feature_set_two
+        if sys.argv[2] == "3":
+            func = feature_set_three
+        if sys.argv[2] == "4":
+            func = feature_set_four
+
         test_labels = load_labels_text("test_labels.txt")
         train_labels = load_labels_text("train_labels.txt")
         create_dataset(test_labels, sys.argv[3], func)
