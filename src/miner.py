@@ -122,6 +122,7 @@ def get_label(ground, labels, int_label):
     return ""
 
 def main():
+    sys.stderr = sys.stdout
     if len(sys.argv) < 2:
         print "Please provide some arguments"
         sys.exit(1)
@@ -150,7 +151,6 @@ def main():
             print "Or Enter [test] [train] files"
             sys.exit(0)
 
-        print "Please provide the test set and train set"
         train_labels = load_labels_text(train_labels_file)
         train_labels = lb.fit_transform([x[1] for x in train_labels])
         test_labels = load_labels_text(test_labels_file)
