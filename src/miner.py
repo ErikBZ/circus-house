@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn import svm
 from sklearn import neighbors
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import normalize
 
 # loading our tracks and labels
 t_l_file = "TracksIds_Labels.txt"
@@ -24,22 +25,23 @@ test_labels_file = "test_labels.txt"
 def one_vs_all_list(labels, limit_to):
     new_labels = []
     for lbl in labels:
-        new_labels.append(lbl if lbl == limit_to else limit_to+1)
+        new_labels.append(1 if lbl == limit_to else 0)
     return new_labels
 
+# use regression for this?
 def cross_validate_svm_one_vs(data, labels):
     # trying rock vs all first
     rock_vs_all = np.array(one_vs_all_list(labels, 1))
-    clf = svm.SVR(kernel='poly')
+    clf = svm.SVC(kernel='poly')
     print data.shape
     print rock_vs_all.shape
-    scores = cross_val_score(clf, data, rock_vs_all, cv=5)
+    scores = cross_val_score(clf, data, rock_vs_all, cv=5, scoring='f1')
     print scores
 
 def cross_validate_svm(data, labels):
-    clf = svm.SVR(kernel='poly')
+    clf = svm.SVC(kernel='poly')
     # f1 may work
-    scores = cross_val_score(clf, data, labels, cv=5)
+    scores = cross_val_score(clf, data, labels, cv=5, scoring='f1')
     print scores
 
 def cross_validate_nn(data, labels):
@@ -64,7 +66,7 @@ def main():
 
         # put some fitting stuff here
         print "Cross validating"
-        cross_validate_svm(train_data, train_labels)
+        cross_validate_svm_one_vs(train_data, train_labels)
 
     elif sys.argv[1] == "--test":
         print "Please provide the test set and train set"
