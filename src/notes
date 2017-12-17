@@ -1,0 +1,5 @@
+Cross val svc
+This was f1 score for one vs all
+took around 2 hours to complete
+no normalization
+0.084, 0.084, 0.099, .1.36, 0.10

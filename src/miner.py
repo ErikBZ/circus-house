@@ -31,12 +31,13 @@ def one_vs_all_list(labels, limit_to):
 # use regression for this?
 def cross_validate_svm_one_vs(data, labels):
     # trying rock vs all first
-    rock_vs_all = np.array(one_vs_all_list(labels, 1))
-    clf = svm.SVC(kernel='poly')
-    print data.shape
-    print rock_vs_all.shape
-    scores = cross_val_score(clf, data, rock_vs_all, cv=5, scoring='f1')
-    print scores
+    for i in range(10):
+        rock_vs_all = np.array(one_vs_all_list(labels, i))
+        clf = svm.SVC(kernel='poly')
+        print data.shape
+        print rock_vs_all.shape
+        scores = cross_val_score(clf, data, rock_vs_all, cv=5, scoring='f1')
+        print scores
 
 def cross_validate_svm(data, labels):
     clf = svm.SVC(kernel='poly')

@@ -170,31 +170,70 @@ def feature_set_one(filename):
 # gets the average 20 segments across the whole song
 def feature_set_two(filename):
     fin = hdf5.open_h5_file_read(filename)
+    # time sig, loudness, temp
+    # seg_loudness
+    # seg_pitches 
+    # seg_timbre
+    features = np.zeros(3 + 20 + 240 + 240)
     
     # using these first
-    features.append(hdf5.get_time_signature(fin))
-    features.append(hdf5.get_loudness(fin))
-    features.append(hdf5.get_tempo(fin))
+    features[0] = hdf5.get_time_signature(fin)
+    features[1] = hdf5.get_loudness(fin)
+    features[2] = hdf5.get_tempo(fin)
 
     # going to get the 20 averages of loudness, chroma, and timbre
+    loudness = reduce_segments(hdf5.get_segments_loudness_max(fin), 20)
+    features[3:23] = flatten(loudness)
+    pitches = reduce_segments(hdf5.get_segments_pitches(fin), 20)
+    features[23:263] = flatten(pitches)
+    timbre = reduce_segments(hdf5.get_segments_timbre(fin), 20)
+    features[263:504] = flatten(timbre)
+    feature_list.append(features)
+
     fin.close()
 
+def flatten(arr):
+    if len(arr.shape) != 2:
+        return arr
+    return np.resize(arr, arr.shape[0] * arr.shape[1])
+
 # n1 will be the new shape of the array
+# cool looks like this is working just fine
 def reduce_segments(segments, n1):
     if len(segments.shape) == 1:
         reduce_segments = np.zeros(n1)
     elif len(segments.shape) == 2:
-        reduce_segments = np.zeros((n1, segments.shape[1])
+        reduce_segments = np.zeros((n1, segments.shape[1]))
     else:
         print "Unable to handle 3d feature sets"
         sys.exit(1)
-    
+
+    step = segments.shape[0] / float(n1)
+    old = 0
+    curr_i = old + step
+    for i in xrange(reduce_segments.shape[0]):
+        old_f = int(old)
+        curr_f = int(curr_i)
+        if old_f == curr_f:
+            reduce_segments[i] = segments[old_f]
+        else:
+            # average out and then set it to reduce elements
+            # 1 d
+            if len(segments.shape):
+                avg = average(segments[old_f:curr_f])
+            # 2d
+            else:
+                avg = average_2d(segments[old_f:curr_f])
+            reduce_segments[i] = avg
+        old = curr_i
+        curr_i += step
+    return reduce_segments
 
 def average_2d(arr):
     result = np.zeros(arr.shape[1])
     for i in xrange(arr.shape[1]):
         for arr_i in xrange(arr.shape[0]):
-            result[i] += arr[i][arr_i]
+            result[i] += arr[arr_i][i]
     result = [x/float(arr.shape[0]) for x in result]
     return result
 
@@ -354,6 +393,8 @@ def main():
         
         if sys.argv[2] == "1":
             func = feature_set_one
+        if sys.argv[2] == "2":
+            func = feature_set_two
         test_labels = load_labels_text("test_labels.txt")
         train_labels = load_labels_text("train_labels.txt")
         create_dataset(test_labels, sys.argv[3], func)
