@@ -48,7 +48,8 @@ def cross_validate_svm(data, labels):
     ])
 
     # f1 may work
-    scores = cross_val_score(clf, data, y=labels, cv=5)
+    # does not take unbalance into consideration
+    scores = cross_val_score(clf, data, y=labels, cv=5, scoring='f1_macro')
     print scores
 
 def cross_validate_nn(data, labels):
