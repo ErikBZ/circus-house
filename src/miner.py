@@ -14,6 +14,7 @@ from features import *
 from sklearn.model_selection import cross_val_score
 from sklearn import svm
 from sklearn import neighbors
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import normalize
 from sklearn.pipeline import Pipeline
@@ -34,7 +35,8 @@ def one_vs_all_list(labels, limit_to):
 
 def cull_features(data, labels):
     print "Culling Features"
-    culler = ExtraTreesClassifier(n_estimators=200)
+    #culler = ExtraTreesClassifier(n_estimators=200)
+    culler = svm.LinearSVC()
     culler = culler.fit(data, labels)
     model = SelectFromModel(culler, prefit=True)
     return model
@@ -65,7 +67,9 @@ def cross_validate_svm(data, labels):
     print scores
 
 def predict_nn(data, labels, test):
-    return 0
+    clf = MLPClassifier(hidden_layer_sizes=(100,), early_stopping=True)
+    clf.fit(data, labels)
+    return clf.predict(test)
 
 def cross_val_knn(data, labels, k_max):
     return 0
@@ -100,11 +104,9 @@ def score(ground, predict, label_mapping):
         print "\t\t\tF1: {0:.2f}\t All Pos: {1}\t True Pos: {2}\t False Pos: {3}".format(
             f1, all_pos, true_pos, false_pos)
         
-def confusion_matrix(ground, predict, label_mapping):
-    conf_mat = sklearn.confusion_matrix(ground, predict)
-    return 0
-
-def compute_confusion(ground, predict):
+def confusion_matrix(ground, predict):
+    conf_mat = metrics.confusion_matrix(ground, predict)
+    print conf_mat
     return 0
 
 def f1_score(pos_elem, true_pos, false_pos):
@@ -167,23 +169,13 @@ def main():
         train_culled = model.transform(train_data)
         test_culled = model.transform(test_data)
 
-        print train_culled.shape
-        print test_culled.shape
         print "Training and testing"
 
-        # do fitting and predicting here
-        clf = svm.SVC(C=5, kernel='poly')
-        clf.fit(train_culled, train_labels)
-        predictions = clf.predict(test_culled)
-
-        '''
-        clf = neighbors.KNeighborsClassifier(n_neighbors=11)
-        clf.fit(train_culled, train_labels)
-        predictions = clf.predict(test_culled)
-        '''
-
+        predictions = predict_nn(train_culled, train_labels, test_culled)
         # score here
+        print "Scoring"
         score(test_labels, predictions, lb)
+        confusion_matrix(test_labels, predictions)
     return 0
 
 if __name__=="__main__":

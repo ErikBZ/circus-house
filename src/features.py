@@ -6,7 +6,7 @@ import sys
 import datetime
 import paths
 import glob
-sys.stderr = open("features_error.log", "w")
+sys.stderr = sys.stdout
 
 # importing hdf5
 import hdf5_getters as hdf5
