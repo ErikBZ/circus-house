@@ -16,6 +16,9 @@ from sklearn import svm
 from sklearn import neighbors
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import normalize
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.feature_selection import SelectFromModel
 
 # loading our tracks and labels
 t_l_file = "TracksIds_Labels.txt"
@@ -40,9 +43,12 @@ def cross_validate_svm_one_vs(data, labels):
         print scores
 
 def cross_validate_svm(data, labels):
-    clf = svm.SVC(kernel='poly')
+    clf = Pipeline([("feature_selection", SelectFromModel(ExtraTreesClassifier())),
+                    ('classification', svm.SVC(kernel='poly'))
+    ])
+
     # f1 may work
-    scores = cross_val_score(clf, data, labels, cv=5, scoring='f1')
+    scores = cross_val_score(clf, data, y=labels, cv=5)
     print scores
 
 def cross_validate_nn(data, labels):
@@ -67,7 +73,7 @@ def main():
 
         # put some fitting stuff here
         print "Cross validating"
-        cross_validate_svm_one_vs(train_data, train_labels)
+        cross_validate_svm(train_data, train_labels)
 
     elif sys.argv[1] == "--test":
         print "Please provide the test set and train set"
