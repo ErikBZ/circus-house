@@ -67,12 +67,14 @@ def cross_validate_svm(data, labels):
     print scores
 
 def predict_nn(data, labels, test):
-    clf = MLPClassifier(hidden_layer_sizes=(100,), early_stopping=True)
+    clf = MLPClassifier(hidden_layer_sizes=(100,), early_stopping=False)
     clf.fit(data, labels)
     return clf.predict(test)
 
-def cross_val_knn(data, labels, k_max):
-    return 0
+def predict_svm(data, labels, test):
+    clf = svm.SVC(kernel="poly", C=5.0)
+    clf.fit(data,labels)
+    return clf.predict(test)
 
 # gets the f1 score of each
 # label unweighted
@@ -162,6 +164,7 @@ def main():
         test_labels = load_labels_text(test_labels_file)
         test_labels = lb.fit_transform([x[1] for x in test_labels])
 
+        print "Feature set used: {}".format(sys.argv[3])
         train_data = load_array(sys.argv[3])
         test_data = load_array(sys.argv[2])
 
@@ -176,6 +179,11 @@ def main():
         print "Scoring"
         score(test_labels, predictions, lb)
         confusion_matrix(test_labels, predictions)
+
+        predictions = predict_svm(train_culled, train_labels, test_culled)
+        score(test_labels, predictions, lb)
+        confusion_matrix(test_labels, predictions)
+
     return 0
 
 if __name__=="__main__":

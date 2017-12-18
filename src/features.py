@@ -206,6 +206,12 @@ def feature_set_four(filename):
     feature_list.append(flatten(timbre))
     fin.close()
 
+def feature_set_five(filename):
+    fin = hdf5.open_h5_file_read(filename)
+    timbre = reduce_segments(hdf5.get_segments_timbre(fin), 20)
+    feature_list.append(flatten(timbre))
+    fin.close()
+
 def flatten(arr):
     if len(arr.shape) != 2:
         return arr
@@ -342,12 +348,16 @@ def main():
             func = feature_set_three
         if sys.argv[2] == "4":
             func = feature_set_four
+        if sys.argv[2] == "5":
+            func = feature_set_five
 
         test_labels = load_labels_text("test_labels.txt")
         train_labels = load_labels_text("train_labels.txt")
         create_dataset(test_labels, sys.argv[3], func)
         create_dataset(train_labels, sys.argv[4], func)
         sys.exit(0)
+
+    print "Generate, labels"
 
 # this will be a mix of segments and beats?
 if __name__=="__main__":
